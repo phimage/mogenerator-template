@@ -4,6 +4,18 @@
 import CoreData
 import QueryKit
 
+<$if noninheritedAttributes.@count > 0$>
+enum <$managedObjectClassName$>Attributes: String {<$foreach Attribute noninheritedAttributes do$>
+    case <$Attribute.name$> = "<$Attribute.name$>"<$endforeach do$>
+}
+<$endif$>
+
+<$if noninheritedRelationships.@count > 0$>
+enum <$managedObjectClassName$>Relationships: String {<$foreach Relationship noninheritedRelationships do$>
+    case <$Relationship.name$> = "<$Relationship.name$>"<$endforeach do$>
+}
+<$endif$>
+
 <$if noninheritedFetchedProperties.@count > 0$>
 enum <$managedObjectClassName$>FetchedProperties: String {<$foreach FetchedProperty noninheritedFetchedProperties do$>
     case <$FetchedProperty.name$> = "<$FetchedProperty.name$>"<$endforeach do$>
@@ -23,26 +35,19 @@ class _<$managedObjectClassName$>: <$customSuperentity$> {
         return QuerySet<<$managedObjectClassName$>>(context, entityName)
     }
 
-    struct Attributes {
+    class Attributes <$if hasCustomSuperentity$>: _<$customSuperentity$>.Attributes <$endif$>{
         <$if noninheritedAttributes.@count > 0$><$foreach Attribute noninheritedAttributes do$>
-        var <$Attribute.name$>:Attribute<<$Attribute.objectAttributeType$><$if Attribute.isOptional$>?<$endif$>> {
-            return Attribute<<$Attribute.objectAttributeType$><$if Attribute.isOptional$>?<$endif$>>("<$Attribute.name$>")
-        }<$endforeach do$><$endif$>
+        static var <$Attribute.name$>:Attribute<<$Attribute.objectAttributeType$><$if Attribute.isOptional$>?<$endif$>> = Attribute<<$Attribute.objectAttributeType$><$if Attribute.isOptional$>?<$endif$>>("<$Attribute.name$>")
+        <$endforeach do$><$endif$>
 
-        <$if noninheritedRelationships.@count > 0$>
-        <$foreach Relationship noninheritedRelationships do$>
-        <$if Relationship.isToMany$>
-        var <$Relationship.name$>:Attribute<<$Relationship.immutableCollectionClassName$>> {
-            return Attribute<<$Relationship.immutableCollectionClassName$>>("<$Relationship.name$>")
-        <$else$>
-        var <$Relationship.name$>:Attribute<<$Relationship.destinationEntity.managedObjectClassName$><$if Relationship.isOptional$>?<$endif$>> {
-            return Attribute<<$Relationship.destinationEntity.managedObjectClassName$><$if Relationship.isOptional$>?<$endif$>>("<$Relationship.name$>")
-        <$endif$>}<$endforeach do$>
-        <$endif$>
-    }
-
-    class var attributes:Attributes {
-        return Attributes()
+    <$if noninheritedRelationships.@count > 0$>
+    <$foreach Relationship noninheritedRelationships do$>
+    <$if Relationship.isToMany$>
+        static var <$Relationship.name$>:Attribute<<$Relationship.immutableCollectionClassName$>> = Attribute<<$Relationship.immutableCollectionClassName$>>("<$Relationship.name$>")
+    <$else$>
+        static var <$Relationship.name$>:Attribute<<$Relationship.destinationEntity.managedObjectClassName$><$if Relationship.isOptional$>?<$endif$>> = Attribute<<$Relationship.destinationEntity.managedObjectClassName$><$if Relationship.isOptional$>?<$endif$>>("<$Relationship.name$>")
+        <$endif$><$endforeach do$>
+    <$endif$>
     }
 
     // MARK: - Class methods
@@ -51,8 +56,8 @@ class _<$managedObjectClassName$>: <$customSuperentity$> {
         return "<$name$>"
     }
 
-    <$if hasCustomSuperentity$>override <$endif$>class func entity(managedObjectContext: NSManagedObjectContext) -> NSEntityDescription! {
-        return NSEntityDescription.entityForName(self.entityName, inManagedObjectContext: managedObjectContext)
+    <$if hasCustomSuperentity$>override <$endif$>class func entity(managedObjectContext: NSManagedObjectContext!) -> NSEntityDescription! {
+        return NSEntityDescription.entityForName(self.entityName, inManagedObjectContext: managedObjectContext);
     }
 
     // MARK: - Life cycle methods
@@ -77,6 +82,18 @@ class _<$managedObjectClassName$>: <$customSuperentity$> {
     @NSManaged
     var <$Attribute.name$>: NSNumber?
 <$endif$>
+
+    var <$Attribute.name$>Value: <$Attribute.scalarAttributeType$>? {
+        get {
+            return self.<$Attribute.name$>?.<$Attribute.scalarAccessorMethodName$>
+        }
+<$if ! Attribute.isReadonly$>
+        set {
+            self.<$Attribute.name$> = newValue == nil ? nil : NSNumber(<$Attribute.scalarAttributeType.camelCaseString$>:newValue!)
+        }
+<$endif$>
+    }
+
 <$else$>
 <$if Attribute.isReadonly$>
     @NSManaged
@@ -94,7 +111,7 @@ class _<$managedObjectClassName$>: <$customSuperentity$> {
 <$foreach Relationship noninheritedRelationships do$>
 <$if Relationship.isToMany$>
     @NSManaged
-    var <$Relationship.name$>: <$Relationship.immutableCollectionClassName$>
+    var <$Relationship.name$>: <$Relationship.mutableCollectionClassName$>
 
 <$else$>
     @NSManaged
@@ -178,29 +195,75 @@ class _<$managedObjectClassName$>: <$customSuperentity$> {
 extension _<$managedObjectClassName$> {
 
     func add<$Relationship.name.initialCapitalString$>(objects: <$Relationship.immutableCollectionClassName$>) {
-        let mutable = self.<$Relationship.name$>.mutableCopy() as NSMutable<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set
-        mutable.union<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
-        self.<$Relationship.name$> = mutable.copy() as NS<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set
+        self.willChangeValueForKey("<$Relationship.name$>")
+        self.<$Relationship.name$>.union<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
+        self.didChangeValueForKey("<$Relationship.name$>")
     }
 
     func remove<$Relationship.name.initialCapitalString$>(objects: <$Relationship.immutableCollectionClassName$>) {
-        let mutable = self.<$Relationship.name$>.mutableCopy() as NSMutable<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set
-        mutable.minus<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
-        self.<$Relationship.name$> = mutable.copy() as NS<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set
+        self.willChangeValueForKey("<$Relationship.name$>")
+        self.<$Relationship.name$>.minus<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
+        self.didChangeValueForKey("<$Relationship.name$>")
     }
 
-    func add<$Relationship.name.initialCapitalString$>Object(value: <$Relationship.destinationEntity.managedObjectClassName$>) {
-        let mutable = self.<$Relationship.name$>.mutableCopy() as NSMutable<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set
-        mutable.addObject(value)
-        self.<$Relationship.name$> = mutable.copy() as NS<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set
+    func clear<$Relationship.name.initialCapitalString$>() {
+        self.willChangeValueForKey("<$Relationship.name$>")
+        self.<$Relationship.name$>.removeAllObjects()
+        self.didChangeValueForKey("<$Relationship.name$>")
     }
 
-    func remove<$Relationship.name.initialCapitalString$>Object(value: <$Relationship.destinationEntity.managedObjectClassName$>) {
-        let mutable = self.<$Relationship.name$>.mutableCopy() as NSMutable<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set
-        mutable.removeObject(value)
-        self.<$Relationship.name$> = mutable.copy() as NS<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set
+    func add<$Relationship.destinationEntity.managedObjectClassName$>Object(value: <$Relationship.destinationEntity.managedObjectClassName$>) {
+        let indexes = NSIndexSet(index: self.<$Relationship.name$>.count)
+        self.willChange(NSKeyValueChange.Insertion, valuesAtIndexes: indexes, forKey:"<$Relationship.name$>")
+        self.<$Relationship.name$>.addObject(value)
+        self.didChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
     }
+
+    func remove<$Relationship.destinationEntity.managedObjectClassName$>Object(value: <$Relationship.destinationEntity.managedObjectClassName$>) {
+        self.willChangeValueForKey("<$Relationship.name$>")
+        self.<$Relationship.name$>.removeObject(value)
+        self.didChangeValueForKey("<$Relationship.name$>")
+    }
+<$if Relationship.jr_isOrdered$>
+    func insertObject(value: <$Relationship.destinationEntity.managedObjectClassName$>, in<$Relationship.name.initialCapitalString$>AtIndex idx: Int) {
+        let indexes = NSIndexSet(index:idx)
+        self.willChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+        self.<$Relationship.name$>.insertObject(value, atIndex:idx)
+        self.didChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+    }
+
+    func removeObjectFrom<$Relationship.name.initialCapitalString$>AtIndex(idx: Int) {
+        let indexes = NSIndexSet(index:idx)
+        self.willChange(NSKeyValueChange.Removal, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+        self.<$Relationship.name$>.removeObjectAtIndex(idx)
+        self.didChange(NSKeyValueChange.Removal, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+    }
+
+    func insert<$Relationship.name.initialCapitalString$>(value: [<$Relationship.destinationEntity.managedObjectClassName$>], atIndexes indexes: NSIndexSet) {
+        self.willChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+        self.<$Relationship.name$>.insertObjects(value, atIndexes:indexes)
+        self.didChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+    }
+
+    func remove<$Relationship.name.initialCapitalString$>AtIndexes(indexes: NSIndexSet) {
+        self.willChange(NSKeyValueChange.Removal, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+        self.<$Relationship.name$>.removeObjectsAtIndexes(indexes)
+        self.didChange(NSKeyValueChange.Removal, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+    }
+
+    func replaceObjectIn<$Relationship.name.initialCapitalString$>AtIndex(idx: Int, withObject value: <$Relationship.destinationEntity.managedObjectClassName$>) {
+        let indexes = NSIndexSet(index:idx)
+        self.willChange(NSKeyValueChange.Replacement, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+        self.<$Relationship.name$>.replaceObjectAtIndex(idx, withObject:value)
+        self.didChange(NSKeyValueChange.Replacement, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+    }
+
+    func replace<$Relationship.name.initialCapitalString$>AtIndexes(indexes: NSIndexSet, with<$Relationship.name.initialCapitalString$> value : [<$Relationship.destinationEntity.managedObjectClassName$>]){
+        self.willChange(NSKeyValueChange.Replacement, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+        self.<$Relationship.name$>.replaceObjectsAtIndexes(indexes, withObjects:value)
+        self.didChange(NSKeyValueChange.Replacement, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
+    }
+<$endif$>
 
 }
 <$endif$><$endforeach do$>
-
