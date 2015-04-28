@@ -194,6 +194,13 @@ class _<$managedObjectClassName$>: <$customSuperentity$> {
 <$foreach Relationship noninheritedRelationships do$><$if Relationship.isToMany$>
 extension _<$managedObjectClassName$> {
 
+<$if Relationship.inverseRelationship.isToMany$>
+<$else$>
+    func queryset<$Relationship.name.initialCapitalString$>(context:NSManagedObjectContext) -> QuerySet<<$Relationship.destinationEntity.managedObjectClassName$>> {
+        return <$Relationship.destinationEntity.managedObjectClassName$>.queryset(context).filter(<$Relationship.destinationEntity.managedObjectClassName$>.Attributes.<$Relationship.inverseRelationship.name$> == self as! <$managedObjectClassName$>)
+    }
+<$endif$>
+
     func add<$Relationship.name.initialCapitalString$>(objects: <$Relationship.immutableCollectionClassName$>) {
         self.willChangeValueForKey("<$Relationship.name$>")
         self.<$Relationship.name$>.union<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
