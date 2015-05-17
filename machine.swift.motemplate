@@ -111,7 +111,10 @@ class _<$managedObjectClassName$>: <$customSuperentity$> {
 <$foreach Relationship noninheritedRelationships do$>
 <$if Relationship.isToMany$>
     @NSManaged
-    var <$Relationship.name$>: <$Relationship.mutableCollectionClassName$>
+    var <$Relationship.name$>: <$Relationship.immutableCollectionClassName$>
+    private var mutable<$Relationship.name.initialCapitalString$>: <$Relationship.mutableCollectionClassName$> {
+    	return self.primitiveValueForKey("<$Relationship.name$>") as! <$Relationship.mutableCollectionClassName$>
+    }
 
 <$else$>
     @NSManaged
@@ -197,77 +200,77 @@ extension _<$managedObjectClassName$> {
 <$if Relationship.inverseRelationship.isToMany$>
 <$else$>
     func queryset<$Relationship.name.initialCapitalString$>(context:NSManagedObjectContext) -> QuerySet<<$Relationship.destinationEntity.managedObjectClassName$>> {
-        return <$Relationship.destinationEntity.managedObjectClassName$>.queryset(context).filter(<$Relationship.destinationEntity.managedObjectClassName$>.Attributes.<$Relationship.inverseRelationship.name$> == self as! <$managedObjectClassName$>)
+        return <$Relationship.destinationEntity.managedObjectClassName$>.queryset(context).filter(<$Relationship.destinationEntity.managedObjectClassName$>.Attributes.<$Relationship.inverseRelationship.name$> == self as<$if Relationship.inverseRelationship.isOptional$>?<$else$>!<$endif$> <$managedObjectClassName$>)
     }
 <$endif$>
 
     func add<$Relationship.name.initialCapitalString$>(objects: <$Relationship.immutableCollectionClassName$>) {
         self.willChangeValueForKey("<$Relationship.name$>")
-        self.<$Relationship.name$>.union<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
+        self.mutable<$Relationship.name.initialCapitalString$>.union<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
         self.didChangeValueForKey("<$Relationship.name$>")
     }
 
     func remove<$Relationship.name.initialCapitalString$>(objects: <$Relationship.immutableCollectionClassName$>) {
         self.willChangeValueForKey("<$Relationship.name$>")
-        self.<$Relationship.name$>.minus<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
+        self.mutable<$Relationship.name.initialCapitalString$>.minus<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
         self.didChangeValueForKey("<$Relationship.name$>")
     }
 
     func clear<$Relationship.name.initialCapitalString$>() {
         self.willChangeValueForKey("<$Relationship.name$>")
-        self.<$Relationship.name$>.removeAllObjects()
+        self.mutable<$Relationship.name.initialCapitalString$>.removeAllObjects()
         self.didChangeValueForKey("<$Relationship.name$>")
     }
 
     func add<$Relationship.destinationEntity.managedObjectClassName$>Object(value: <$Relationship.destinationEntity.managedObjectClassName$>) {
         let indexes = NSIndexSet(index: self.<$Relationship.name$>.count)
         self.willChange(NSKeyValueChange.Insertion, valuesAtIndexes: indexes, forKey:"<$Relationship.name$>")
-        self.<$Relationship.name$>.addObject(value)
+        self.mutable<$Relationship.name.initialCapitalString$>.addObject(value)
         self.didChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
     }
 
     func remove<$Relationship.destinationEntity.managedObjectClassName$>Object(value: <$Relationship.destinationEntity.managedObjectClassName$>) {
         self.willChangeValueForKey("<$Relationship.name$>")
-        self.<$Relationship.name$>.removeObject(value)
+        self.mutable<$Relationship.name.initialCapitalString$>.removeObject(value)
         self.didChangeValueForKey("<$Relationship.name$>")
     }
 <$if Relationship.jr_isOrdered$>
     func insertObject(value: <$Relationship.destinationEntity.managedObjectClassName$>, in<$Relationship.name.initialCapitalString$>AtIndex idx: Int) {
         let indexes = NSIndexSet(index:idx)
         self.willChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
-        self.<$Relationship.name$>.insertObject(value, atIndex:idx)
+        self.mutable<$Relationship.name.initialCapitalString$>.insertObject(value, atIndex:idx)
         self.didChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
     }
 
     func removeObjectFrom<$Relationship.name.initialCapitalString$>AtIndex(idx: Int) {
         let indexes = NSIndexSet(index:idx)
         self.willChange(NSKeyValueChange.Removal, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
-        self.<$Relationship.name$>.removeObjectAtIndex(idx)
+        self.mutable<$Relationship.name.initialCapitalString$>.removeObjectAtIndex(idx)
         self.didChange(NSKeyValueChange.Removal, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
     }
 
     func insert<$Relationship.name.initialCapitalString$>(value: [<$Relationship.destinationEntity.managedObjectClassName$>], atIndexes indexes: NSIndexSet) {
         self.willChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
-        self.<$Relationship.name$>.insertObjects(value, atIndexes:indexes)
+        self.mutable<$Relationship.name.initialCapitalString$>.insertObjects(value, atIndexes:indexes)
         self.didChange(NSKeyValueChange.Insertion, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
     }
 
     func remove<$Relationship.name.initialCapitalString$>AtIndexes(indexes: NSIndexSet) {
         self.willChange(NSKeyValueChange.Removal, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
-        self.<$Relationship.name$>.removeObjectsAtIndexes(indexes)
+        self.mutable<$Relationship.name.initialCapitalString$>.removeObjectsAtIndexes(indexes)
         self.didChange(NSKeyValueChange.Removal, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
     }
 
     func replaceObjectIn<$Relationship.name.initialCapitalString$>AtIndex(idx: Int, withObject value: <$Relationship.destinationEntity.managedObjectClassName$>) {
         let indexes = NSIndexSet(index:idx)
         self.willChange(NSKeyValueChange.Replacement, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
-        self.<$Relationship.name$>.replaceObjectAtIndex(idx, withObject:value)
+        self.mutable<$Relationship.name.initialCapitalString$>.replaceObjectAtIndex(idx, withObject:value)
         self.didChange(NSKeyValueChange.Replacement, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
     }
 
     func replace<$Relationship.name.initialCapitalString$>AtIndexes(indexes: NSIndexSet, with<$Relationship.name.initialCapitalString$> value : [<$Relationship.destinationEntity.managedObjectClassName$>]){
         self.willChange(NSKeyValueChange.Replacement, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
-        self.<$Relationship.name$>.replaceObjectsAtIndexes(indexes, withObjects:value)
+        self.mutable<$Relationship.name.initialCapitalString$>.replaceObjectsAtIndexes(indexes, withObjects:value)
         self.didChange(NSKeyValueChange.Replacement, valuesAtIndexes:indexes, forKey:"<$Relationship.name$>")
     }
 <$endif$>
