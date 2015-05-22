@@ -52,7 +52,7 @@ class _<$managedObjectClassName$>: <$customSuperentity$> {
 
     // MARK: - Class methods
 
-    <$if hasCustomSuperentity$>override <$endif$>class var entityName:String {
+    override class var entityName:String {
         return "<$name$>"
     }
 
