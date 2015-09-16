@@ -205,9 +205,12 @@ extension _<$managedObjectClassName$> {
 <$endif$>
 
     func add<$Relationship.name.initialCapitalString$>(objects: <$Relationship.immutableCollectionClassName$>) {
-        self.willChangeValueForKey("<$Relationship.name$>")
+        <$if Relationship.jr_isOrdered$>let indexes = NSIndexSet(indexesInRange: NSMakeRange(<$Relationship.name$>.count, objects.count))
+        self.willChange(NSKeyValueChange.Insertion, valuesAtIndexes: indexes, forKey:"<$Relationship.name$>")
+<$else$>self.willChangeValueForKey("<$Relationship.name$>", withSetMutation: NSKeyValueSetMutationKind.UnionSetMutation, usingObjects:value_)<$endif$>
         self.mutable<$Relationship.name.initialCapitalString$>.union<$if Relationship.jr_isOrdered$>Ordered<$endif$>Set(objects)
-        self.didChangeValueForKey("<$Relationship.name$>")
+        <$if Relationship.jr_isOrdered$>self.didChange(NSKeyValueChange.Insertion, valuesAtIndexes: indexes, forKey: "<$Relationship.name$>")
+<$else$>self.didChangeValueForKey("<$Relationship.name$>", withSetMutation: NSKeyValueSetMutationKind.UnionSetMutation, usingObjects:value_)<$endif$>
     }
 
     func remove<$Relationship.name.initialCapitalString$>(objects: <$Relationship.immutableCollectionClassName$>) {
